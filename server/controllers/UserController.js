@@ -42,7 +42,7 @@ class UserController {
 
     try {
       const user = await User.findOne({ username }).exec();
-      if (!user) return res.status(400).json({ message: 'User not found.' });
+      if (!user) return res.status(400).json({ status: 'error', message: 'User not found.' });
 
       const checkPassword = await user.comparePassword(password);
       if (!checkPassword) {
