@@ -39,7 +39,7 @@ class ArticleController {
 
   static async getAllArticles(req, res) {
     try {
-      const article = await Article.find().populate({ path: 'author', select: '_id username email bio' }).exec();
+      const article = await Article.find().exec();
       const articles = article.map(item => ({
         id: item._id,
         title: item.title,
