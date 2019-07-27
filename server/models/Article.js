@@ -36,6 +36,17 @@ const ArticleSchema = Schema({
   },
 });
 
+const autoPopulateAuthor = function (next) {
+  this.populate({
+    path: 'author',
+    select: '_id username email bio',
+  });
+  next();
+};
+
+ArticleSchema.pre('find', autoPopulateAuthor);
+ArticleSchema.pre('findOne', autoPopulateAuthor);
+
 ArticleSchema.pre('save', function () {
   this.slug = slug(this.title, { lower: true });
 });
