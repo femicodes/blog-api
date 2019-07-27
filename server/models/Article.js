@@ -25,7 +25,7 @@ const ArticleSchema = Schema({
     type: String,
     required: true,
   },
-  tags: [{ type: String }],
+  tags: [String],
   likes: [{
     type: Schema.ObjectId,
     ref: 'User',
