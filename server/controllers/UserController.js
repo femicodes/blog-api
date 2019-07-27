@@ -18,8 +18,10 @@ class UserController {
     if (error) return res.status(400).json({ status: 'error', message: error.details[0].message });
 
     const {
-      username, email, password,
+      email, password,
     } = req.body;
+    let { username } = req.body;
+    username = username.replace(/\s/g, '');
 
     const newUser = new User({
       username, email, password,
@@ -96,6 +98,7 @@ class UserController {
           username: user.username,
           email: user.email,
           bio: user.bio,
+          my_articles: user.myArticles,
         },
       });
     } catch (error) {
