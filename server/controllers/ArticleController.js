@@ -52,7 +52,7 @@ class ArticleController {
         createdAt: item.createdAt,
         author: item.author,
       }));
-      return res.status(201).json({
+      return res.status(200).json({
         status: 'success',
         data: articles,
       });
@@ -66,7 +66,7 @@ class ArticleController {
 
     try {
       const article = await Article.findOne({ slug }).exec();
-      return res.status(201).json({
+      return res.status(200).json({
         status: 'success',
         data: {
           id: article._id,

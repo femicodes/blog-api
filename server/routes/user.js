@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import UserController from '../controllers/UserController';
+import Auth from '../middleware/auth';
 
 const userRoute = Router();
 
-userRoute.get('/profile/:username', UserController.profile);
-userRoute.put('/profile', UserController.editProfile);
+userRoute.get('/profile/:username', Auth.authenticate, UserController.profile);
+userRoute.put('/profile', Auth.authenticate, UserController.editProfile);
 
 export default userRoute;
