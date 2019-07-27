@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import Article from '../models/Article';
+import { User } from '../models/User';
 
 /**
  * @class ArticleController
@@ -28,6 +29,10 @@ class ArticleController {
       if (checkArticle) return res.status(400).json({ status: 'error', message: 'Article exists!' });
 
       await article.save();
+
+      await User.findByIdAndUpdate(author, {
+        $addToSet: { myArticles: article._id },
+      }, { new: true });
 
       return res.status(201).json({
         status: 'success',
@@ -65,6 +70,7 @@ class ArticleController {
         description: item.description,
         body: item.body,
         tags: item.tags,
+        tagsCount: item.tags.length,
         slug: item.slug,
         likes: item.likes,
         likesCount: item.likes.length,
@@ -99,6 +105,7 @@ class ArticleController {
           description: article.description,
           body: article.body,
           tags: article.tags,
+          tagsCount: article.tags.length,
           slug: article.slug,
           likes: article.likes,
           likesCount: article.likes.length,
@@ -128,6 +135,9 @@ class ArticleController {
         return res.status(401).json({ status: 'error', message: 'You\'re not allowed to perform this action' });
       }
       await Article.findByIdAndDelete(id).exec();
+      await User.findByIdAndUpdate(author, {
+        $pull: { myArticles: id },
+      }, { new: true });
       return res.status(204).json({ status: 'success', message: 'Successfully deleted article' });
     } catch (error) {
       return res.status(400).json({ status: 'error', message: 'an error occured' });

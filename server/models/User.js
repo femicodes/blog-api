@@ -34,7 +34,22 @@ const UserSchema = Schema({
   },
   bio: String,
   image: String,
+  myArticles: [{
+    type: Schema.ObjectId,
+    ref: 'Article',
+  }],
 });
+
+const autoPopulateArticles = function (next) {
+  this.populate({
+    path: 'myArticles',
+    select: '-author',
+  });
+  next();
+};
+
+UserSchema.pre('find', autoPopulateArticles);
+UserSchema.pre('findOne', autoPopulateArticles);
 
 UserSchema.pre('save', function (next) {
   this.password = bcrypt.hashSync(this.password, 10);
