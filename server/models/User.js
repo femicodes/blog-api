@@ -35,7 +35,7 @@ const UserSchema = Schema({
   bio: String,
   image: String,
   myArticles: [{
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Article',
   }],
 });
