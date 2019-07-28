@@ -14,7 +14,7 @@ const ArticleSchema = Schema({
     unique: true,
   },
   author: {
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
   },
   description: {
@@ -27,7 +27,11 @@ const ArticleSchema = Schema({
   },
   tags: [String],
   likes: [{
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  comments: [{
+    type: Schema.Types.ObjectId,
     ref: 'User',
   }],
   createdAt: {
@@ -39,7 +43,7 @@ const ArticleSchema = Schema({
 const autoPopulateAuthor = function (next) {
   this.populate({
     path: 'author',
-    select: '_id username email bio',
+    select: '_id username email bio -myArticles',
   });
   next();
 };
