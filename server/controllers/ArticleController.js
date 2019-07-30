@@ -18,8 +18,9 @@ class ArticleController {
    */
   static async createArticle(req, res) {
     const {
-      title, author, description, body, tags,
+      title, description, body, tags,
     } = req.body;
+    const author = req.user._id;
 
     const article = new Article({
       title, author, description, body, tags,
@@ -44,8 +45,8 @@ class ArticleController {
           body: article.body,
           tags: article.tags,
           slug: article.slug,
-          likes: article.likes,
-          likesCount: article.likes.length,
+          favourites: article.favourites,
+          favouritesCount: article.favourites.length,
           createdAt: article.createdAt,
           author: article.author,
         },
@@ -74,8 +75,8 @@ class ArticleController {
         tagsCount: item.tags.length,
         slug: item.slug,
         comments: item.comments,
-        likes: item.likes,
-        likesCount: item.likes.length,
+        favourites: item.favourites,
+        favouritesCount: item.favourites.length,
         createdAt: item.createdAt,
         author: item.author,
       }));
@@ -109,8 +110,8 @@ class ArticleController {
           tags: article.tags,
           tagsCount: article.tags.length,
           slug: article.slug,
-          likes: article.likes,
-          likesCount: article.likes.length,
+          favourites: article.favourites,
+          favouritesCount: article.favourites.length,
           createdAt: article.createdAt,
           author: article.author,
         },
@@ -149,11 +150,12 @@ class ArticleController {
      * @description Add comment to an article by id
      * @param {object} req - The Request Object
      * @param {object} res - The Response Object
-     * @returns {void}
+     * @return {json} Returns json object
      */
   static async addComments(req, res) {
     const { article } = req.params;
-    const { text, user } = req.body;
+    const { text } = req.body;
+    const user = req.user._id;
 
     const comment = new Comment({ text, user, article });
 
@@ -180,7 +182,7 @@ class ArticleController {
     * @description Delete an article's comment by id
     * @param {object} req - The Request Object
     * @param {object} res - The Response Object
-    * @returns {void}
+    * @return {json} Returns json object
     */
   static async deleteComment(req, res) {
     const { comment } = req.params;
@@ -196,6 +198,72 @@ class ArticleController {
         $pull: { comments: comment },
       }, { new: true });
       return res.status(204).json({ status: 'success', message: 'Successfully deleted article' });
+    } catch (error) {
+      return res.status(400).json({ status: 'error', message: 'an error occured' });
+    }
+  }
+
+  /**
+    * @method favouriteArticle
+    * @description Adds article to list of user's favourite article
+    * @param {object} req - The Request Object
+    * @param {object} res - The Response Object
+    * @return {json} Returns json object
+    */
+  static async favouriteArticle(req, res) {
+    try {
+      const { article } = req.params;
+      const user = req.user._id;
+
+      const checkArticle = await Article.findOne({ favourites: user }).exec();
+      const checkUser = await User.findOne({ favourites: article }).exec();
+
+      if (!checkArticle && !checkUser) {
+        await Article.findByIdAndUpdate(article, {
+          $addToSet: { favourites: user },
+        }, { new: true });
+
+        await User.findByIdAndUpdate(user, {
+          $addToSet: { favourites: article },
+        }, { new: true });
+
+        return res.status(201).json({ status: 'success', message: 'Article favourited!' });
+      }
+
+      return res.status(400).json({ status: 'error', message: 'You already favourited this article!' });
+    } catch (error) {
+      return res.status(400).json({ status: 'error', message: 'an error occured' });
+    }
+  }
+
+  /**
+    * @method unfavouriteArticle
+    * @description Removes article to list of user's favourite article
+    * @param {object} req - The Request Object
+    * @param {object} res - The Response Object
+    * @return {json} Returns json object
+    */
+  static async unfavouriteArticle(req, res) {
+    try {
+      const { article } = req.params;
+      const user = req.user._id;
+
+      const checkArticle = await Article.findOne({ favourites: user });
+      const checkUser = await User.findOne({ favourites: article });
+
+      if (!checkArticle && !checkUser) {
+        return res.status(400).json({ status: 'error', message: 'There\'s nothing to unfavourite' });
+      }
+
+      await Article.findByIdAndUpdate(article, {
+        $pull: { favourites: user },
+      }, { new: true });
+
+      await User.findByIdAndUpdate(user, {
+        $pull: { favourites: article },
+      }, { new: true });
+
+      return res.status(201).json({ status: 'success', message: 'Article unfavourited!' });
     } catch (error) {
       return res.status(400).json({ status: 'error', message: 'an error occured' });
     }

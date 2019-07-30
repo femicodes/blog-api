@@ -33,6 +33,10 @@ const UserSchema = Schema({
     required: true,
   },
   bio: String,
+  favourites: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Article',
+  }],
   image: String,
   myArticles: [{
     type: Schema.Types.ObjectId,

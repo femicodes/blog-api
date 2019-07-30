@@ -29,10 +29,10 @@ class UserController {
 
     try {
       const checkUser = await User.findOne({ email });
-      if (checkUser) return res.status(400).json({ status: 'error', message: 'User already registered.' });
+      if (checkUser) return res.status(400).json({ status: 'error', message: 'Email already in use.' });
 
       const checkUsername = await User.findOne({ username });
-      if (checkUsername) return res.status(400).json({ status: 'error', message: 'User already registered.' });
+      if (checkUsername) return res.status(400).json({ status: 'error', message: 'User already taken.' });
 
       const user = await newUser.save();
       const token = await newUser.generateToken();
@@ -71,6 +71,7 @@ class UserController {
       const token = user.generateToken();
       return res.status(200).json({
         status: 'success',
+        user_id: user._id,
         message: `welcome ${user.username}`,
         token,
       });
