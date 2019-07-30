@@ -17,16 +17,16 @@ class ArticleController {
    * @return {json} Returns json object
    */
   static async createArticle(req, res) {
-    const {
-      title, description, body, tags,
-    } = req.body;
-    const author = req.user._id;
-
-    const article = new Article({
-      title, author, description, body, tags,
-    });
-
     try {
+      const {
+        title, description, body, tags,
+      } = req.body;
+      const author = req.user._id;
+
+      const article = new Article({
+        title, author, description, body, tags,
+      });
+
       const checkArticle = await Article.findOne({ title });
       if (checkArticle) return res.status(400).json({ status: 'error', message: 'Article exists!' });
 
@@ -97,8 +97,9 @@ class ArticleController {
      * @return {json} Returns json object
      */
   static async getArticleBySlug(req, res) {
-    const { slug } = req.params;
     try {
+      const { slug } = req.params;
+
       const article = await Article.findOne({ slug }).exec();
       return res.status(200).json({
         status: 'success',
@@ -129,10 +130,10 @@ class ArticleController {
      * @return {json} Returns json object
      */
   static async deleteArticle(req, res) {
-    const { id } = req.params;
-    const author = req.user._id;
-
     try {
+      const { id } = req.params;
+      const author = req.user._id;
+
       const checkAuthor = await Article.findById(author);
       if (!checkAuthor) return res.status(401).json({ status: 'error', message: 'You\'re not allowed to perform this action' });
       await Article.findByIdAndDelete(id).exec();
@@ -153,13 +154,13 @@ class ArticleController {
      * @return {json} Returns json object
      */
   static async addComments(req, res) {
-    const { article } = req.params;
-    const { text } = req.body;
-    const user = req.user._id;
-
-    const comment = new Comment({ text, user, article });
-
     try {
+      const { article } = req.params;
+      const { text } = req.body;
+      const user = req.user._id;
+
+      const comment = new Comment({ text, user, article });
+
       const checkArticle = await Article.findById(article).exec();
       if (!checkArticle) return res.status(400).json({ status: 'error', message: 'Article does not exist!' });
 
@@ -185,11 +186,11 @@ class ArticleController {
     * @return {json} Returns json object
     */
   static async deleteComment(req, res) {
-    const { comment } = req.params;
-    const { article } = req.body;
-    const author = req.user._id;
-
     try {
+      const { comment } = req.params;
+      const { article } = req.body;
+      const author = req.user._id;
+
       const checkAuthor = await Article.findById(author);
       if (!checkAuthor) return res.status(401).json({ status: 'error', message: 'You\'re not allowed to perform this action' });
 
