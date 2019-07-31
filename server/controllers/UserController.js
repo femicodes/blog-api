@@ -1,5 +1,11 @@
 /* eslint-disable no-underscore-dangle */
+/* import Fawn from 'fawn';
+import mongoose from 'mongoose'; */
 import { User } from '../models/User';
+// import Follow from '../models/Follow';
+
+// Fawn.init(mongoose);
+
 /**
  * @class UserController
  * @description specifies which method handles a request for User endpoints
@@ -60,6 +66,86 @@ class UserController {
           email: user.email,
           bio: user.bio,
         },
+      });
+    } catch (error) {
+      return res.status(400).json({ status: 'error', message: 'an error occured' });
+    }
+  }
+
+  /**
+   * @method follow
+   * @description A registered user can follow another registered user by username
+   * @param {object} req - The Request Object
+   * @param {object} res - The Response Object
+   * @return {json} Returns json object
+   */
+  static async follow(req, res) {
+    try {
+      const { username } = req.params;
+      const user = req.user._id;
+
+      const checkUsername = await User.findOne({ username }).exec();
+      if (!checkUsername) return res.status(400).json({ status: 'error', message: 'Username does\'nt exist' });
+
+      if (user.equals(checkUsername._id)) return res.status(400).json({ status: 'error', message: 'You can\'t follow yourself' });
+
+      const userA = user;
+      const userB = checkUsername._id;
+
+      const isFollowing = await User.findById(userA);
+      if (isFollowing.following.includes(userB)) return res.status(400).json({ status: 'error', message: 'You already follow this user' });
+
+      await User.findByIdAndUpdate(userA, {
+        $addToSet: { following: userB },
+      }, { new: true });
+
+      await User.findByIdAndUpdate(userB, {
+        $addToSet: { followers: userA },
+      }, { new: true });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'You just followed this user!',
+      });
+    } catch (error) {
+      return res.status(400).json({ status: 'error', message: 'an error occured' });
+    }
+  }
+
+  /**
+   * @method unfollow
+   * @description A registered user can unfollow another registered user by username
+   * @param {object} req - The Request Object
+   * @param {object} res - The Response Object
+   * @return {json} Returns json object
+   */
+  static async unfollow(req, res) {
+    try {
+      const { username } = req.params;
+      const user = req.user._id;
+
+      const checkUsername = await User.findOne({ username }).exec();
+      if (!checkUsername) return res.status(400).json({ status: 'error', message: 'Username does\'nt exist' });
+
+      if (user.equals(checkUsername._id)) return res.status(400).json({ status: 'error', message: 'You can\'t unfollow yourself' });
+
+      const userA = user;
+      const userB = checkUsername._id;
+
+      const isFollowing = await User.findById(userA);
+      if (!isFollowing.following.includes(userB)) return res.status(400).json({ status: 'error', message: 'You already unfollowed this user' });
+
+      await User.findByIdAndUpdate(userA, {
+        $pull: { following: userB },
+      }, { new: true });
+
+      await User.findByIdAndUpdate(userB, {
+        $pull: { followers: userA },
+      }, { new: true });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'You just unfollowed this user!',
       });
     } catch (error) {
       return res.status(400).json({ status: 'error', message: 'an error occured' });
