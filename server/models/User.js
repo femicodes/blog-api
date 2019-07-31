@@ -33,6 +33,14 @@ const UserSchema = Schema({
     required: true,
   },
   bio: String,
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
   favourites: [{
     type: Schema.Types.ObjectId,
     ref: 'Article',
