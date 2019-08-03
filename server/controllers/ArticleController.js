@@ -24,7 +24,7 @@ class ArticleController {
       const author = req.user._id;
 
       const article = new Article({
-        title, author, description, body, tags,
+        title, description, body, tags,
       });
 
       const checkArticle = await Article.findOne({ title });
@@ -65,7 +65,13 @@ class ArticleController {
      */
   static async getAllArticles(req, res) {
     try {
-      const article = await Article.find().exec();
+      const page = req.query.page || 1;
+      const perPage = 10;
+      const article = await Article
+        .find()
+        .skip((perPage * page) - perPage)
+        .limit(perPage)
+        .exec();
       const articles = article.map(item => ({
         id: item._id,
         title: item.title,
@@ -82,6 +88,8 @@ class ArticleController {
       }));
       return res.status(200).json({
         status: 'success',
+        page,
+        count: articles.length,
         data: articles,
       });
     } catch (error) {

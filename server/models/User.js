@@ -45,7 +45,6 @@ const UserSchema = Schema({
     type: Schema.Types.ObjectId,
     ref: 'Article',
   }],
-  image: String,
   myArticles: [{
     type: Schema.Types.ObjectId,
     ref: 'Article',
