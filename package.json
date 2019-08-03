@@ -6,12 +6,10 @@
   "scripts": {
     "start": "yarn run build && node build/app",
     "clean": "rimraf build",
-    "build-server": "babel server --out-dir build",
-    "build": "yarn run clean && yarn build-server",
+    "build": "yarn run clean && babel server -d build",
     "dev": "DEBUG=express nodemon --exec babel-node server/app"
   },
   "devDependencies": {
-    "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.4",
     "@babel/node": "^7.5.0",
     "@babel/preset-env": "^7.5.4",
@@ -25,6 +23,7 @@
   "dependencies": {
     "@hapi/joi": "^15.1.0",
     "@babel/polyfill": "^7.4.4",
+    "@babel/cli": "^7.5.0",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
