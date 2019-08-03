@@ -69,6 +69,7 @@ class ArticleController {
       const perPage = 10;
       const article = await Article
         .find()
+        .sort({ createdAt: -1 })
         .skip((perPage * page) - perPage)
         .limit(perPage)
         .exec();
@@ -93,6 +94,7 @@ class ArticleController {
         data: articles,
       });
     } catch (error) {
+      console.log(error);
       return res.status(400).json({ status: 'error', message: 'an error occured' });
     }
   }
