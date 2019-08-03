@@ -6,7 +6,8 @@
   "scripts": {
     "start": "yarn run build && node build/app",
     "clean": "rimraf build",
-    "build": "yarn run clean && babel server -d build",
+    "build-server": "babel server --out-dir build",
+    "build": "yarn run clean && yarn build-server",
     "dev": "DEBUG=express nodemon --exec babel-node server/app"
   },
   "devDependencies": {
