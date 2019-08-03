@@ -1,10 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-/* import Fawn from 'fawn';
-import mongoose from 'mongoose'; */
 import { User } from '../models/User';
-// import Follow from '../models/Follow';
-
-// Fawn.init(mongoose);
 
 /**
  * @class UserController
