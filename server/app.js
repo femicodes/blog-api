@@ -34,6 +34,15 @@ app.all('*', (req, res) => {
   });
 });
 
+app.use((err, req, res) => {
+  res.status(err.status || 500).json({
+    errors: {
+      message: err.message,
+      error: {},
+    },
+  });
+});
+
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
