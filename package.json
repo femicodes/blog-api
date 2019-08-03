@@ -4,7 +4,7 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "start": "node build/app",
+    "start": "yarn run build && node build/app",
     "clean": "rimraf build",
     "build": "yarn run clean && babel server -d build",
     "dev": "DEBUG=express nodemon --exec babel-node server/app"
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^15.1.0",
+    "@babel/polyfill": "^7.4.4",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",

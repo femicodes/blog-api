@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
+import '@babel/polyfill';
 import { config } from 'dotenv';
 import api from './routes/index';
 import './models/User';
