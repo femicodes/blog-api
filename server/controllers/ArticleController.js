@@ -94,7 +94,6 @@ class ArticleController {
         data: articles,
       });
     } catch (error) {
-      console.log(error);
       return res.status(400).json({ status: 'error', message: 'an error occured' });
     }
   }

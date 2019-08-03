@@ -4,6 +4,7 @@ import Auth from '../middleware/auth';
 
 const userRoute = Router();
 
+userRoute.get('/feed', Auth.authenticate, UserController.feed);
 userRoute.get('/profile/:username', Auth.authenticate, UserController.profile);
 userRoute.put('/profile', Auth.authenticate, UserController.editProfile);
 userRoute.post('/:username/follow', Auth.authenticate, UserController.follow);

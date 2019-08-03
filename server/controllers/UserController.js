@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { User } from '../models/User';
+import Article from '../models/Article';
 
 /**
  * @class UserController
@@ -141,6 +142,49 @@ class UserController {
       return res.status(200).json({
         status: 'success',
         message: 'You just unfollowed this user!',
+      });
+    } catch (error) {
+      return res.status(400).json({ status: 'error', message: 'an error occured' });
+    }
+  }
+
+  /**
+    * @method feed
+    * @description Displays articles of who the user follows
+    * @param {object} req - The Request Object
+    * @param {object} res - The Response Object
+    * @return {json} Returns json object
+    */
+  static async feed(req, res) {
+    try {
+      const { user } = req;
+      const page = req.query.page || 1;
+      const perPage = 10;
+      const article = await Article
+        .find({ author: { $in: user.following } })
+        .sort({ createdAt: -1 })
+        .skip((perPage * page) - perPage)
+        .limit(perPage)
+        .exec();
+      const articles = article.map(item => ({
+        id: item._id,
+        title: item.title,
+        description: item.description,
+        body: item.body,
+        tags: item.tags,
+        tagsCount: item.tags.length,
+        slug: item.slug,
+        comments: item.comments,
+        favourites: item.favourites,
+        favouritesCount: item.favourites.length,
+        createdAt: item.createdAt,
+        author: item.author,
+      }));
+      return res.status(200).json({
+        status: 'success',
+        page,
+        count: articles.length,
+        data: articles,
       });
     } catch (error) {
       return res.status(400).json({ status: 'error', message: 'an error occured' });
