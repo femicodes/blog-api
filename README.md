@@ -1,6 +1,8 @@
 # Blog API 📚
 Write and read articles!
 
+Deployed at: https://young-hamlet-80803.herokuapp.com/api/v1
+
 ## Features
 
 1. User can create an account and have a profile.
