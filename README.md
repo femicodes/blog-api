@@ -48,7 +48,7 @@ Deployed at: https://young-hamlet-80803.herokuapp.com/api/v1
 | ------------------------------------------------------- | ----------- | ----------------------------------------- |
 | <code>/api/v1/feed</code>                              | `GET`       | List of articles written by authors a user follows.                         |
 | <code>/api/v1/profile/:username</code>                      | `GET`       | Get a user's profile by username.              |
-| <code>/api/v1/profile</code>                         | `PUT`       | Edit user profile.                 |
+| <code>/api/v1/profile/:username</code>                         | `PATCH`       | Edit user profile.                 |
 | <code>/api/v1/:username/follow</code>                             | `POST`       |   Follow another user by username.                        |
 | <code>/api/v1/:username/unfollow</code>                         | `POST`       | Unfollow another user by username.                 |
 | <code>/api/v1/articles</code> | `GET`       | Fetch all articles |

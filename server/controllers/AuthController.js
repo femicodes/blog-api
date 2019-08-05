@@ -1,5 +1,7 @@
 /* eslint-disable no-underscore-dangle */
-import { User, validateUser } from '../models/User';
+import User from '../models/User';
+import Response from '../util/Response';
+import { validateSignup, validateLogin } from '../validations/auth';
 /**
  * @class AuthController
  * @description specifies which method handles a request for Auth endpoints
@@ -14,38 +16,35 @@ class AuthController {
    * @return {json} Returns json object
    */
   static async signup(req, res) {
-    const { error } = validateUser(req.body);
-    if (error) return res.status(400).json({ status: 'error', message: error.details[0].message });
-
-    const {
-      email, password,
-    } = req.body;
-    let { username } = req.body;
-    username = username.replace(/\s/g, '');
-
-    const newUser = new User({
-      username, email, password,
-    });
-
     try {
+      const { error } = validateSignup(req.body);
+      if (error) return Response.error(res, 400, error.details[0].message);
+
+      const {
+        email, password,
+      } = req.body;
+      let { username } = req.body;
+      username = username.replace(/\s/g, '');
+
+      const newUser = new User({
+        username, email, password,
+      });
       const checkUser = await User.findOne({ email });
-      if (checkUser) return res.status(400).json({ status: 'error', message: 'Email already in use.' });
+      if (checkUser) return Response.error(res, 403, 'Email already in use.');
 
       const checkUsername = await User.findOne({ username });
-      if (checkUsername) return res.status(400).json({ status: 'error', message: 'User already taken.' });
+      if (checkUsername) return Response.error(res, 403, 'User already taken.');
 
       const user = await newUser.save();
       const token = await newUser.generateToken();
-      return res.status(201).json({
-        status: 'success',
-        data: {
-          token,
-          username: user.username,
-          email: user.email,
-        },
-      });
+      const data = {
+        token,
+        username: user.username,
+        email: user.email,
+      };
+      return Response.success(res, 201, data, 'Account created!');
     } catch (err) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -57,26 +56,26 @@ class AuthController {
    * @return {json} Returns json object
    */
   static async login(req, res) {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(422).json({ status: 'error', message: 'Fields cannot be blank' });
-
     try {
+      const { error } = validateLogin(req.body);
+      if (error) return Response.error(res, 400, error.details[0].message);
+
+      const { username, password } = req.body;
       const user = await User.findOne({ username }).exec();
-      if (!user) return res.status(400).json({ status: 'error', message: 'User not found.' });
+      if (!user) return Response.error(res, 404, 'User not found.');
 
       const checkPassword = await user.comparePassword(password);
       if (!checkPassword) {
-        return res.status(422).json({ status: 'error', message: 'Wrong password' });
+        return Response.error(res, 403, 'Wrong password');
       }
       const token = user.generateToken();
-      return res.status(200).json({
-        status: 'success',
-        user_id: user._id,
-        message: `welcome ${user.username}`,
+      const data = {
         token,
-      });
+        user_id: user._id,
+      };
+      return Response.success(res, 200, data, `welcome ${user.username}`);
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 }
