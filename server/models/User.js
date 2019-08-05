@@ -2,7 +2,6 @@
 /* eslint-disable func-names */
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
-import Joi from '@hapi/joi';
 import jwt from 'jsonwebtoken';
 import { config } from 'dotenv';
 
@@ -77,23 +76,4 @@ UserSchema.methods.comparePassword = function (password) {
 
 const User = model('User', UserSchema);
 
-const validateUser = (user) => {
-  const schema = {
-    username: Joi.string()
-      .min(3)
-      .max(50)
-      .required(),
-    email: Joi.string()
-      .min(5)
-      .max(255)
-      .required()
-      .email(),
-    password: Joi.string()
-      .min(5)
-      .max(255)
-      .required(),
-  };
-  return Joi.validate(user, schema);
-};
-
-export { validateUser, User };
+export default User;

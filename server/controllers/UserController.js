@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle */
-import { User } from '../models/User';
+import User from '../models/User';
 import Article from '../models/Article';
+import validateUserProfile from '../validations/user';
+import Response from '../util/Response';
 
 /**
  * @class UserController
@@ -16,10 +18,10 @@ class UserController {
    * @return {json} Returns json object
    */
   static async profile(req, res) {
-    const { username } = req.params;
-
     try {
+      const { username } = req.params;
       const user = await User.findOne({ username }).exec();
+      if (!user) return Response.error(res, 404, 'User with given username not found!');
       return res.status(200).json({
         status: 'success',
         data: {
@@ -31,7 +33,7 @@ class UserController {
         },
       });
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -43,28 +45,29 @@ class UserController {
    * @return {json} Returns json object
    */
   static async editProfile(req, res) {
-    const { id } = req.params;
-    const {
-      username, email, bio,
-    } = req.body;
-
     try {
-      const user = await User.findOneAndUpdate(id, {
-        username, email, bio,
-      }, { new: true });
-      if (!user) return res.status(404).json({ status: 'error', message: 'User with given id not found!' });
+      const { error } = validateUserProfile(req.body);
+      if (error) return Response.error(res, 400, error.details[0].message);
 
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          bio: user.bio,
-        },
-      });
-    } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      const userName = req.params.username;
+      const user = req.user.username;
+
+      if (user !== userName) return Response.error(res, 401, 'You can\'t edit this profile!');
+
+      const userUpdate = await User.findByIdAndUpdate(req.user._id, { $set: req.body },
+        { new: true });
+      if (!userUpdate) return Response.error(res, 404, 'User with given username not found!');
+
+      const data = {
+        id: userUpdate._id,
+        username: userUpdate.username,
+        email: userUpdate.email,
+        bio: userUpdate.bio,
+      };
+
+      return Response.success(res, 201, data, 'Profile updated!');
+    } catch (err) {
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -81,15 +84,15 @@ class UserController {
       const user = req.user._id;
 
       const checkUsername = await User.findOne({ username }).exec();
-      if (!checkUsername) return res.status(400).json({ status: 'error', message: 'Username does\'nt exist' });
+      if (!checkUsername) return Response.error(res, 404, 'Username does\'nt exist');
 
-      if (user.equals(checkUsername._id)) return res.status(400).json({ status: 'error', message: 'You can\'t follow yourself' });
+      if (user.equals(checkUsername._id)) return Response.error(res, 403, 'You can\'t follow yourself');
 
       const userA = user;
       const userB = checkUsername._id;
 
       const isFollowing = await User.findById(userA);
-      if (isFollowing.following.includes(userB)) return res.status(400).json({ status: 'error', message: 'You already follow this user' });
+      if (isFollowing.following.includes(userB)) return Response.error(res, 403, 'You already follow this user');
 
       await User.findByIdAndUpdate(userA, {
         $addToSet: { following: userB },
@@ -99,12 +102,9 @@ class UserController {
         $addToSet: { followers: userA },
       }, { new: true });
 
-      return res.status(200).json({
-        status: 'success',
-        message: 'You just followed this user!',
-      });
+      return Response.success(res, 200, 'You just followed this user!');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured');
     }
   }
 
@@ -121,15 +121,15 @@ class UserController {
       const user = req.user._id;
 
       const checkUsername = await User.findOne({ username }).exec();
-      if (!checkUsername) return res.status(400).json({ status: 'error', message: 'Username does\'nt exist' });
+      if (!checkUsername) return Response.error(res, 404, 'Username does\'nt exist');
 
-      if (user.equals(checkUsername._id)) return res.status(400).json({ status: 'error', message: 'You can\'t unfollow yourself' });
+      if (user.equals(checkUsername._id)) return Response.error(res, 403, 'You can\'t unfollow yourself');
 
       const userA = user;
       const userB = checkUsername._id;
 
       const isFollowing = await User.findById(userA);
-      if (!isFollowing.following.includes(userB)) return res.status(400).json({ status: 'error', message: 'You already unfollowed this user' });
+      if (!isFollowing.following.includes(userB)) return Response.error(res, 403, 'You already unfollowed this user');
 
       await User.findByIdAndUpdate(userA, {
         $pull: { following: userB },
@@ -139,12 +139,9 @@ class UserController {
         $pull: { followers: userA },
       }, { new: true });
 
-      return res.status(200).json({
-        status: 'success',
-        message: 'You just unfollowed this user!',
-      });
+      return Response.success(res, 200, 'You just unfollowed this user!');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured');
     }
   }
 
@@ -180,14 +177,15 @@ class UserController {
         createdAt: item.createdAt,
         author: item.author,
       }));
-      return res.status(200).json({
-        status: 'success',
+
+      const data = {
         page,
         count: articles.length,
         data: articles,
-      });
+      };
+      return Response.success(res, 200, data);
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured');
     }
   }
 }

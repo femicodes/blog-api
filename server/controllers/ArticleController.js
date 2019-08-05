@@ -1,7 +1,9 @@
 /* eslint-disable no-underscore-dangle */
 import Article from '../models/Article';
-import { User } from '../models/User';
+import User from '../models/User';
 import Comment from '../models/Comment';
+import Response from '../util/Response';
+import { validateArticle, validateComment } from '../validations/article';
 
 /**
  * @class ArticleController
@@ -18,9 +20,13 @@ class ArticleController {
    */
   static async createArticle(req, res) {
     try {
+      const { error } = validateArticle(req.body);
+      if (error) return Response.error(res, 400, error.details[0].message);
+
       const {
         title, description, body, tags,
       } = req.body;
+
       const author = req.user._id;
 
       const article = new Article({
@@ -28,7 +34,7 @@ class ArticleController {
       });
 
       const checkArticle = await Article.findOne({ title });
-      if (checkArticle) return res.status(400).json({ status: 'error', message: 'Article exists!' });
+      if (checkArticle) return Response.error(res, 400, 'Article already exists!');
 
       await article.save();
 
@@ -36,23 +42,22 @@ class ArticleController {
         $addToSet: { myArticles: article._id },
       }, { new: true });
 
-      return res.status(201).json({
-        status: 'success',
-        data: {
-          id: article._id,
-          title: article.title,
-          description: article.description,
-          body: article.body,
-          tags: article.tags,
-          slug: article.slug,
-          favourites: article.favourites,
-          favouritesCount: article.favourites.length,
-          createdAt: article.createdAt,
-          author: article.author,
-        },
-      });
+      const data = {
+        id: article._id,
+        title: article.title,
+        description: article.description,
+        body: article.body,
+        tags: article.tags,
+        slug: article.slug,
+        favourites: article.favourites,
+        favouritesCount: article.favourites.length,
+        createdAt: article.createdAt,
+        author: article.author,
+      };
+
+      return Response.success(res, 201, data, 'Article created!');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -87,14 +92,16 @@ class ArticleController {
         createdAt: item.createdAt,
         author: item.author,
       }));
-      return res.status(200).json({
-        status: 'success',
+
+      const data = {
         page,
         count: articles.length,
         data: articles,
-      });
+      };
+
+      return Response.success(res, 200, data);
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -110,24 +117,25 @@ class ArticleController {
       const { slug } = req.params;
 
       const article = await Article.findOne({ slug }).exec();
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          id: article._id,
-          title: article.title,
-          description: article.description,
-          body: article.body,
-          tags: article.tags,
-          tagsCount: article.tags.length,
-          slug: article.slug,
-          favourites: article.favourites,
-          favouritesCount: article.favourites.length,
-          createdAt: article.createdAt,
-          author: article.author,
-        },
-      });
+      if (!article) return Response.error(res, 404, 'Article doesn\'t exist!');
+
+      const data = {
+        id: article._id,
+        title: article.title,
+        description: article.description,
+        body: article.body,
+        tags: article.tags,
+        tagsCount: article.tags.length,
+        slug: article.slug,
+        favourites: article.favourites,
+        favouritesCount: article.favourites.length,
+        createdAt: article.createdAt,
+        author: article.author,
+      };
+
+      return Response.success(res, 200, data);
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -144,14 +152,14 @@ class ArticleController {
       const author = req.user._id;
 
       const checkAuthor = await Article.findById(author);
-      if (!checkAuthor) return res.status(401).json({ status: 'error', message: 'You\'re not allowed to perform this action' });
+      if (!checkAuthor) return Response.error(res, 401, 'You\'re not allowed to perform this action');
       await Article.findByIdAndDelete(id).exec();
       await User.findByIdAndUpdate(author, {
         $pull: { myArticles: id },
       }, { new: true });
-      return res.status(204).json({ status: 'success', message: 'Successfully deleted article' });
+      return Response.success(res, 204, 'Successfully deleted article');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -164,6 +172,9 @@ class ArticleController {
      */
   static async addComments(req, res) {
     try {
+      const { error } = validateComment(req.body);
+      if (error) return Response.error(res, 400, error.details[0].message);
+
       const { article } = req.params;
       const { text } = req.body;
       const user = req.user._id;
@@ -171,19 +182,19 @@ class ArticleController {
       const comment = new Comment({ text, user, article });
 
       const checkArticle = await Article.findById(article).exec();
-      if (!checkArticle) return res.status(400).json({ status: 'error', message: 'Article does not exist!' });
+      if (!checkArticle) return Response.error(res, 404, 'Article does not exist!');
 
       const checkUser = await User.findById(user).exec();
-      if (!checkUser) return res.status(400).json({ status: 'error', message: 'User does not exist!' });
+      if (!checkUser) return Response.error(res, 404, 'User does not exist!');
 
       await comment.save();
       await Article.findByIdAndUpdate(article, {
         $addToSet: { comments: comment._id },
       }, { new: true });
 
-      return res.status(200).json({ message: 'success', comment });
+      return Response.success(res, 200, comment);
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -201,15 +212,15 @@ class ArticleController {
       const author = req.user._id;
 
       const checkAuthor = await Article.findById(author);
-      if (!checkAuthor) return res.status(401).json({ status: 'error', message: 'You\'re not allowed to perform this action' });
+      if (!checkAuthor) return Response.error(res, 401, 'You\'re not allowed to perform this action');
 
       await Comment.findByIdAndDelete(comment).exec();
       await Article.findByIdAndUpdate(article, {
         $pull: { comments: comment },
       }, { new: true });
-      return res.status(204).json({ status: 'success', message: 'Successfully deleted article' });
+      return Response.success(res, 204, 'Successfully deleted article');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -237,12 +248,11 @@ class ArticleController {
           $addToSet: { favourites: article },
         }, { new: true });
 
-        return res.status(201).json({ status: 'success', message: 'Article favourited!' });
+        return Response.success(res, 201, 'Article favourited!');
       }
-
-      return res.status(400).json({ status: 'error', message: 'You already favourited this article!' });
+      return Response.error(res, 400, 'You already favourited this article!');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 
@@ -262,7 +272,7 @@ class ArticleController {
       const checkUser = await User.findOne({ favourites: article });
 
       if (!checkArticle && !checkUser) {
-        return res.status(400).json({ status: 'error', message: 'There\'s nothing to unfavourite' });
+        return Response.error(res, 400, 'There\'s nothing to unfavourite');
       }
 
       await Article.findByIdAndUpdate(article, {
@@ -273,9 +283,9 @@ class ArticleController {
         $pull: { favourites: article },
       }, { new: true });
 
-      return res.status(201).json({ status: 'success', message: 'Article unfavourited!' });
+      return Response.success(res, 201, 'Article unfavourited!');
     } catch (error) {
-      return res.status(400).json({ status: 'error', message: 'an error occured' });
+      return Response.error(res, 400, 'An error occured.');
     }
   }
 }
